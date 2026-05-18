@@ -5,10 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GA4 BigQuery 电商用户行为分析</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'Inter',system-ui,sans-serif;background:#f8fafc;color:#1e293b;line-height:1.7}
-.container{max-width:800px;margin:0 auto;padding:2rem 1.5rem}
+.container{max-width:900px;margin:0 auto;padding:2rem 1.5rem}
 header{padding:3rem 0 2rem;border-bottom:2px solid #e2e8f0;margin-bottom:2.5rem}
 header h1{font-size:1.75rem;font-weight:700;color:#0f172a;margin-bottom:.5rem}
 .subtitle{color:#64748b;font-size:.95rem;line-height:1.6}
@@ -16,109 +17,79 @@ header h1{font-size:1.75rem;font-weight:700;color:#0f172a;margin-bottom:.5rem}
 section{margin-bottom:2.5rem}
 h2{font-size:1.25rem;font-weight:600;color:#0f172a;margin-bottom:1rem;padding-bottom:.5rem;border-bottom:1px solid #e2e8f0}
 h3{font-size:1rem;font-weight:600;color:#334155;margin-bottom:.5rem}
+h4{font-size:.95rem;font-weight:600;color:#475569;margin-bottom:.35rem}
 p{margin-bottom:.75rem;color:#475569}
 .highlight{background:#fef3c7;padding:.15rem .4rem;border-radius:4px;font-weight:500}
 code{background:#f1f5f9;padding:.15rem .4rem;border-radius:4px;font-size:.875rem;color:#334155}
-pre{background:#0f172a;color:#e2e8f0;padding:1.25rem;border-radius:8px;overflow-x:auto;font-size:.8rem;line-height:1.6;margin:1rem 0}
+blockquote{border-left:3px solid #93c5fd;padding:.75rem 1rem;background:#eff6ff;border-radius:0 8px 8px 0;margin:1rem 0;color:#1e40af}
+.tag{display:inline-block;background:#f1f5f9;padding:.2rem .6rem;border-radius:4px;font-size:.8rem;color:#475569;margin-right:.5rem;margin-bottom:.5rem}
+.tag-core{background:#fef3c7;color:#92400e;font-weight:600}
+.chart-container{width:100%;height:400px;margin:1rem 0}
+.chart-note{font-size:.85rem;color:#64748b;background:#f1f5f9;padding:.75rem 1rem;border-radius:8px;margin-bottom:1.5rem}
+details{margin-bottom:1rem;border:1px solid #e2e8f0;border-radius:8px;background:#fff}
+summary{cursor:pointer;padding:1rem 1.25rem;font-weight:500;color:#0f172a;list-style:none;display:flex;align-items:center;gap:.5rem}
+summary::-webkit-details-marker{display:none}
+summary::before{content:'▸';transition:transform .2s}
+details[open] summary::before{content:'▾'}
+summary:hover{background:#f8fafc}
+details pre{margin:0;padding:0 1.25rem 1.25rem}
+pre{background:#0f172a;color:#e2e8f0;padding:1rem;border-radius:0 0 8px 8px;overflow-x:auto;font-size:.8rem;line-height:1.6}
 pre code{background:none;color:inherit;padding:0}
-.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;margin:1rem 0}
-.metric-card{background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:1rem;text-align:center}
-.metric-card .value{font-size:1.5rem;font-weight:700;color:#0f172a}
-.metric-card .label{font-size:.8rem;color:#64748b;margin-top:.25rem}
-.funnel{display:flex;flex-direction:column;gap:.5rem;margin:1rem 0}
-.funnel-step{display:flex;align-items:center;gap:1rem;padding:.75rem 1rem;background:#fff;border:1px solid #e2e8f0;border-radius:8px}
-.funnel-step .step-name{flex:1;font-weight:500;font-size:.9rem}
-.funnel-step .step-value{font-weight:600;color:#0f172a;font-size:.9rem}
-.funnel-step .step-rate{color:#16a34a;font-weight:600;font-size:.85rem;min-width:60px;text-align:right}
-.funnel-arrow{text-align:center;color:#94a3b8;font-size:.8rem}
-.insight-box{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:1rem;margin:1rem 0}
-.insight-box h3{color:#166534;margin-bottom:.5rem}
-.insight-box p{color:#15803d;margin-bottom:0}
-table{width:100%;border-collapse:collapse;margin:1rem 0}
-th,td{text-align:left;padding:.6rem .75rem;border-bottom:1px solid #e2e8f0;font-size:.9rem}
-th{background:#f8fafc;font-weight:600;color:#334155}
+.insight-box{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:1.25rem;margin-bottom:1.5rem}
+.insight-box h4{color:#166534;margin-bottom:.5rem;font-size:.95rem}
+.insight-box p{color:#15803d;font-size:.9rem}
+.insight-box ul{margin:.5rem 0 0 1.25rem;color:#15803d;font-size:.9rem}
+.insight-box li{margin-bottom:.35rem}
+.kw{color:#c084fc}.fn{color:#67e8f9}.str{color:#86efac}.num{color:#fbbf24}.cm{color:#64748b;font-style:italic}
 footer{padding:2rem 0;border-top:2px solid #e2e8f0;margin-top:2rem;text-align:center;color:#94a3b8;font-size:.8rem}
 footer a{color:#3b82f6;text-decoration:none}
-.tag{display:inline-block;background:#f1f5f9;padding:.2rem .6rem;border-radius:4px;font-size:.8rem;color:#475569;margin-right:.5rem;margin-bottom:.5rem}
-.kw{color:#c084fc}.fn{color:#67e8f9}.str{color:#86efac}.num{color:#fbbf24}.cm{color:#64748b;font-style:italic}
 </style>
 </head>
 <body>
 <div class="container">
+
+<!-- ====== Header ====== -->
 <header>
 <span class="badge">个人项目 · SQL 数据分析</span>
 <h1>GA4 BigQuery 电商用户行为分析</h1>
-<p class="subtitle">基于公开 GA4 数据集的 SQL 漏斗、渠道归因与用户生命周期分析<br>
-项目背景：将实习中 GA / Mixpanel 周报取数工作，向上扩展为"懂业务指标"，向下扩展为"能用 SQL 查询原始事件数据"</p>
+<p class="subtitle">基于 Google Merchandise Store 公开数据集的 SQL 漏斗、渠道归因与用户生命周期分析<br>
+将实习中 GA / Mixpanel 周报取数工作，向上扩展为"懂业务指标"，向下扩展为"能用 SQL 查询原始事件数据"</p>
 </header>
 
+<!-- ====== ① 项目背景 ====== -->
 <section>
 <h2>项目背景</h2>
-<p>实习期间负责 <span class="highlight">www.easesourcing.com</span> 的 SEO 运营与数据周报工作：从 GA 取数、Mixpanel 漏斗看板每日记录、整理用户转化周报。在实际操作中发现——GA 界面看板是加工后的聚合数据，无法灵活拆解真实业务漏斗（涉及 GA 流量 + 前端点击事件 + 后端 Agent 行为三层合并）。</p>
-<p>因此，使用 Google 公开的 <code>bigquery-public-data.ga4_obfuscated_sample_ecommerce</code> 数据集，用 SQL 复现一套标准用户行为分析流程，证明<strong>从运营执行到数据分析</strong>的能力迁移。</p>
+<p>实习期间负责 <span class="highlight">www.easesourcing.com</span> 的 SEO 运营与数据周报：从 GA 取数、Mixpanel 漏斗每日记录、整理用户转化周报。实际工作中发现，真实业务漏斗跨越三层——GA 流量（访客）→ 前端点击（"Try for Free"按钮）→ 后端 Agent 行为（开聊），GA 看板无法灵活拆解。</p>
+<p>因此用 Google 公开 GA4 数据集，以 SQL 复现一套标准分析流程，完成从<strong>运营执行到数据分析</strong>的能力迁移。</p>
 <div>
-<span class="tag">SQL</span><span class="tag">BigQuery</span><span class="tag">GA4</span><span class="tag">用户漏斗</span><span class="tag">渠道归因</span><span class="tag">数据分析</span>
+<span class="tag">SQL</span><span class="tag">BigQuery</span><span class="tag">GA4</span><span class="tag">转化漏斗</span><span class="tag">渠道归因</span>
 </div>
 </section>
 
+<!-- ====== ② 数据说明 ====== -->
 <section>
-<h2>分析方法 · 5 段 SQL 核心查询</h2>
-<h3>1. 每日活跃用户（DAU）</h3>
-<p>基础聚合：<code>GROUP BY</code> + <code>COUNT(DISTINCT)</code></p>
+<h2>数据来源与漏斗说明</h2>
+<p>数据来源：<code>bigquery-public-data.ga4_obfuscated_sample_ecommerce</code>，为 Google Merchandise Store 三个月真实流量的脱敏混淆数据集。</p>
+<p>分析过程中发现原始漏斗存在事件顺序异常（部分用户的 <code>purchase</code> 时间戳早于 <code>begin_checkout</code>），属于该公开数据集的已知噪声特征。</p>
+<blockquote>
+<strong>本分析采用有序时间戳约束漏斗</strong>：仅统计按顺序经历 view_item → add_to_cart → begin_checkout → purchase 各步骤的用户，剔除顺序异常记录，以还原更符合真实购买路径的转化结构。
+</blockquote>
+</section>
+
+<!-- ====== ③ SQL 能力展示 ====== -->
+<section>
+<h2>SQL 查询（点击展开）</h2>
+
+<details>
+<summary>1. 每日活跃用户（DAU） <span class="tag">GROUP BY + COUNT DISTINCT</span></summary>
 <pre><code><span class="kw">SELECT</span> event_date, <span class="fn">COUNT</span>(<span class="kw">DISTINCT</span> user_pseudo_id) <span class="kw">AS</span> dau
 <span class="kw">FROM</span> ga4_obfuscated_sample_ecommerce.events_*
 <span class="kw">WHERE</span> _TABLE_SUFFIX <span class="kw">BETWEEN</span> <span class="str">'20201101'</span> <span class="kw">AND</span> <span class="str">'20201130'</span>
 <span class="kw">GROUP BY</span> event_date <span class="kw">ORDER BY</span> event_date;</code></pre>
+</details>
 
-<h3>2. 渠道来源拆解（归一化分组）</h3>
-<p>进阶技巧：<code>CTE (WITH)</code> + <code>CASE WHEN</code> 渠道归类 + <code>SAFE_DIVIDE</code> 百分比计算</p>
-<pre><code><span class="kw">WITH</span> sessions <span class="kw">AS</span> (
-  <span class="kw">SELECT</span> user_pseudo_id,
-    <span class="fn">LOWER</span>(<span class="fn">COALESCE</span>(traffic_source.source, <span class="str">'(not set)'</span>)) <span class="kw">AS</span> source,
-    <span class="fn">LOWER</span>(<span class="fn">COALESCE</span>(traffic_source.medium, <span class="str">'(not set)'</span>)) <span class="kw">AS</span> medium
-  <span class="kw">FROM</span> ga4_obfuscated_sample_ecommerce.events_*
-  <span class="kw">WHERE</span> event_name = <span class="str">'session_start'</span>
-),
-classified <span class="kw">AS</span> (
-  <span class="kw">SELECT</span> user_pseudo_id, source, medium,
-    <span class="kw">CASE</span>
-      <span class="kw">WHEN</span> source = <span class="str">'(direct)'</span> <span class="kw">OR</span> medium <span class="kw">IN</span> (<span class="str">'(none)'</span>, <span class="str">'direct'</span>) <span class="kw">THEN</span> <span class="str">'Direct'</span>
-      <span class="kw">WHEN</span> medium <span class="kw">IN</span> (<span class="str">'organic'</span>, <span class="str">'seo'</span>) <span class="kw">THEN</span> <span class="str">'Organic Search'</span>
-      <span class="kw">WHEN</span> medium <span class="kw">IN</span> (<span class="str">'cpc'</span>, <span class="str">'ppc'</span>) <span class="kw">THEN</span> <span class="str">'Paid Search'</span>
-      <span class="kw">WHEN</span> medium = <span class="str">'referral'</span> <span class="kw">THEN</span> <span class="str">'Referral'</span>
-      <span class="kw">ELSE</span> <span class="str">'Other / Unknown'</span>
-    <span class="kw">END</span> <span class="kw">AS</span> channel_group
-  <span class="kw">FROM</span> sessions
-)
-<span class="kw">SELECT</span> channel_group,
-  <span class="fn">COUNT</span>(<span class="kw">DISTINCT</span> user_pseudo_id) <span class="kw">AS</span> users,
-  <span class="fn">ROUND</span>(<span class="num">100</span> * <span class="fn">SAFE_DIVIDE</span>(<span class="fn">COUNT</span>(<span class="kw">DISTINCT</span> user_pseudo_id),
-    <span class="fn">SUM</span>(<span class="fn">COUNT</span>(<span class="kw">DISTINCT</span> user_pseudo_id)) <span class="kw">OVER</span>()), <span class="num">2</span>) <span class="kw">AS</span> user_share_pct
-<span class="kw">FROM</span> classified <span class="kw">GROUP BY</span> channel_group <span class="kw">ORDER BY</span> users <span class="kw">DESC</span>;</code></pre>
-
-<h3>3. 转化漏斗 + 窗口函数</h3>
-<p>进阶技巧：<code>CASE WHEN</code> 排序 + <code>LAG()</code> 窗口函数计算上一步转化率</p>
-<pre><code><span class="kw">WITH</span> funnel_data <span class="kw">AS</span> (
-  <span class="kw">SELECT</span> event_name,
-    <span class="fn">COUNT</span>(<span class="kw">DISTINCT</span> user_pseudo_id) <span class="kw">AS</span> unique_users,
-    <span class="kw">CASE</span> event_name
-      <span class="kw">WHEN</span> <span class="str">'view_item'</span> <span class="kw">THEN</span> <span class="num">1</span>
-      <span class="kw">WHEN</span> <span class="str">'add_to_cart'</span> <span class="kw">THEN</span> <span class="num">2</span>
-      <span class="kw">WHEN</span> <span class="str">'begin_checkout'</span> <span class="kw">THEN</span> <span class="num">3</span>
-      <span class="kw">WHEN</span> <span class="str">'purchase'</span> <span class="kw">THEN</span> <span class="num">4</span>
-    <span class="kw">END</span> <span class="kw">AS</span> step_order
-  <span class="kw">FROM</span> ga4_obfuscated_sample_ecommerce.events_*
-  <span class="kw">WHERE</span> event_name <span class="kw">IN</span> (<span class="str">'view_item'</span>, <span class="str">'add_to_cart'</span>,
-    <span class="str">'begin_checkout'</span>, <span class="str">'purchase'</span>)
-  <span class="kw">GROUP BY</span> event_name
-)
-<span class="kw">SELECT</span> event_name, unique_users,
-  <span class="fn">ROUND</span>(unique_users / <span class="fn">LAG</span>(unique_users)
-    <span class="kw">OVER</span> (<span class="kw">ORDER BY</span> step_order) * <span class="num">100</span>, <span class="num">2</span>) <span class="kw">AS</span> conversion_rate_prev_step
-<span class="kw">FROM</span> funnel_data <span class="kw">ORDER BY</span> step_order;</code></pre>
-
-<h3>4. 新老用户分层</h3>
-<p>进阶技巧：<code>CTE</code> + <code>JOIN</code> + 首次访问日期判定</p>
+<details>
+<summary>2. 新老用户分层 <span class="tag">CTE + JOIN + 首次访问日期判定</span></summary>
 <pre><code><span class="kw">WITH</span> first_visit <span class="kw">AS</span> (
   <span class="kw">SELECT</span> user_pseudo_id, <span class="fn">MIN</span>(event_date) <span class="kw">AS</span> first_date
   <span class="kw">FROM</span> ga4_obfuscated_sample_ecommerce.events_*
@@ -132,69 +103,199 @@ classified <span class="kw">AS</span> (
 <span class="kw">FROM</span> ga4_obfuscated_sample_ecommerce.events_* e
 <span class="kw">JOIN</span> first_visit f <span class="kw">USING</span>(user_pseudo_id)
 <span class="kw">GROUP BY</span> event_date <span class="kw">ORDER BY</span> event_date;</code></pre>
+</details>
 
-<h3>5. UNNEST 嵌套参数提取</h3>
-<p>进阶技巧：<code>UNNEST(event_params)</code> + 子查询提取自定义字段</p>
-<pre><code><span class="kw">SELECT</span> event_date,
-  (<span class="kw">SELECT</span> value.string_value <span class="kw">FROM UNNEST</span>(event_params)
-    <span class="kw">WHERE</span> key = <span class="str">'page_location'</span>) <span class="kw">AS</span> page_url,
-  <span class="fn">COUNT</span>(*) <span class="kw">AS</span> pageviews
-<span class="kw">FROM</span> ga4_obfuscated_sample_ecommerce.events_*
-<span class="kw">WHERE</span> event_name = <span class="str">'page_view'</span>
-<span class="kw">GROUP BY</span> <span class="num">1</span>, <span class="num">2</span> <span class="kw">ORDER BY</span> pageviews <span class="kw">DESC LIMIT</span> <span class="num">20</span>;</code></pre>
+<details>
+<summary>3. 渠道来源拆解 <span class="tag">CTE + CASE WHEN 渠道归类</span></summary>
+<pre><code><span class="kw">WITH</span> sessions <span class="kw">AS</span> (
+  <span class="kw">SELECT</span> user_pseudo_id,
+    <span class="fn">LOWER</span>(<span class="fn">COALESCE</span>(traffic_source.source, <span class="str">'(not set)'</span>)) <span class="kw">AS</span> source,
+    <span class="fn">LOWER</span>(<span class="fn">COALESCE</span>(traffic_source.medium, <span class="str">'(not set)'</span>)) <span class="kw">AS</span> medium
+  <span class="kw">FROM</span> ga4_obfuscated_sample_ecommerce.events_*
+  <span class="kw">WHERE</span> event_name = <span class="str">'session_start'</span>
+),
+classified <span class="kw">AS</span> (
+  <span class="kw">SELECT</span> *,
+    <span class="kw">CASE</span>
+      <span class="kw">WHEN</span> source = <span class="str">'(direct)'</span> <span class="kw">OR</span> medium <span class="kw">IN</span> (<span class="str">'(none)'</span>, <span class="str">'direct'</span>) <span class="kw">THEN</span> <span class="str">'Direct'</span>
+      <span class="kw">WHEN</span> medium <span class="kw">IN</span> (<span class="str">'organic'</span>, <span class="str">'seo'</span>) <span class="kw">THEN</span> <span class="str">'Organic Search'</span>
+      <span class="kw">WHEN</span> medium <span class="kw">IN</span> (<span class="str">'cpc'</span>, <span class="str">'ppc'</span>) <span class="kw">THEN</span> <span class="str">'Paid Search'</span>
+      <span class="kw">WHEN</span> medium = <span class="str">'referral'</span> <span class="kw">THEN</span> <span class="str">'Referral'</span>
+      <span class="kw">ELSE</span> <span class="str">'Other'</span>
+    <span class="kw">END</span> <span class="kw">AS</span> channel_group
+  <span class="kw">FROM</span> sessions
+)
+<span class="kw">SELECT</span> channel_group,
+  <span class="fn">COUNT</span>(<span class="kw">DISTINCT</span> user_pseudo_id) <span class="kw">AS</span> users
+<span class="kw">FROM</span> classified <span class="kw">GROUP BY</span> channel_group <span class="kw">ORDER BY</span> users <span class="kw">DESC</span>;</code></pre>
+</details>
+
+<details>
+<summary>4. 总转化漏斗（有序时间戳约束） <span class="tag">LAG 窗口函数</span></summary>
+<pre><code><span class="kw">WITH</span> user_events <span class="kw">AS</span> (
+  <span class="kw">SELECT</span> user_pseudo_id, event_name,
+    <span class="fn">MIN</span>(event_timestamp) <span class="kw">AS</span> min_ts
+  <span class="kw">FROM</span> ga4_obfuscated_sample_ecommerce.events_*
+  <span class="kw">WHERE</span> event_name <span class="kw">IN</span> (<span class="str">'view_item'</span>,<span class="str">'add_to_cart'</span>,
+    <span class="str">'begin_checkout'</span>,<span class="str">'purchase'</span>)
+  <span class="kw">GROUP BY</span> user_pseudo_id, event_name
+),
+ordered <span class="kw">AS</span> (
+  <span class="kw">SELECT</span> user_pseudo_id,
+    <span class="fn">MAX</span>(<span class="kw">CASE WHEN</span> event_name=<span class="str">'view_item'</span> <span class="kw">THEN</span> min_ts <span class="kw">END</span>) <span class="kw">AS</span> t_view,
+    <span class="fn">MAX</span>(<span class="kw">CASE WHEN</span> event_name=<span class="str">'add_to_cart'</span> <span class="kw">THEN</span> min_ts <span class="kw">END</span>) <span class="kw">AS</span> t_add,
+    <span class="fn">MAX</span>(<span class="kw">CASE WHEN</span> event_name=<span class="str">'begin_checkout'</span> <span class="kw">THEN</span> min_ts <span class="kw">END</span>) <span class="kw">AS</span> t_checkout,
+    <span class="fn">MAX</span>(<span class="kw">CASE WHEN</span> event_name=<span class="str">'purchase'</span> <span class="kw">THEN</span> min_ts <span class="kw">END</span>) <span class="kw">AS</span> t_purchase
+  <span class="kw">FROM</span> user_events <span class="kw">GROUP BY</span> user_pseudo_id
+  <span class="kw">HAVING</span> t_view <span class="kw">&lt;</span> t_add <span class="kw">AND</span> t_add <span class="kw">&lt;</span> t_checkout <span class="kw">AND</span> t_checkout <span class="kw">&lt;</span> t_purchase
+)
+<span class="kw">SELECT</span>
+  <span class="fn">COUNT</span>(*) <span class="kw">AS</span> view_item,
+  <span class="fn">COUNT</span>(*) <span class="kw">AS</span> add_to_cart,
+  <span class="fn">COUNT</span>(*) <span class="kw">AS</span> begin_checkout,
+  <span class="fn">COUNT</span>(*) <span class="kw">AS</span> purchase
+<span class="kw">FROM</span> ordered;</code></pre>
+</details>
+
+<details>
+<summary>5. 分渠道转化漏斗 <span class="tag tag-core">核心查询</span> <span class="tag">多表 JOIN + 分渠道聚合</span></summary>
+<pre><code><span class="kw">WITH</span> user_channels <span class="kw">AS</span> (
+  <span class="kw">SELECT DISTINCT</span> user_pseudo_id, channel_group
+  <span class="kw">FROM</span> sessions_with_classification
+),
+funnel_by_channel <span class="kw">AS</span> (
+  <span class="kw">SELECT</span> c.channel_group,
+    <span class="fn">COUNT</span>(<span class="kw">DISTINCT</span> <span class="kw">CASE WHEN</span> f.t_view <span class="kw">IS NOT NULL</span> <span class="kw">THEN</span> f.user_pseudo_id <span class="kw">END</span>) <span class="kw">AS</span> view_users,
+    <span class="fn">COUNT</span>(<span class="kw">DISTINCT</span> <span class="kw">CASE WHEN</span> f.t_add <span class="kw">IS NOT NULL</span> <span class="kw">THEN</span> f.user_pseudo_id <span class="kw">END</span>) <span class="kw">AS</span> add_users,
+    <span class="fn">COUNT</span>(<span class="kw">DISTINCT</span> <span class="kw">CASE WHEN</span> f.t_checkout <span class="kw">IS NOT NULL</span> <span class="kw">THEN</span> f.user_pseudo_id <span class="kw">END</span>) <span class="kw">AS</span> checkout_users,
+    <span class="fn">COUNT</span>(<span class="kw">DISTINCT</span> <span class="kw">CASE WHEN</span> f.t_purchase <span class="kw">IS NOT NULL</span> <span class="kw">THEN</span> f.user_pseudo_id <span class="kw">END</span>) <span class="kw">AS</span> purchase_users
+  <span class="kw">FROM</span> ordered_funnel f
+  <span class="kw">JOIN</span> user_channels c <span class="kw">USING</span>(user_pseudo_id)
+  <span class="kw">GROUP BY</span> c.channel_group
+)
+<span class="kw">SELECT</span> channel_group, view_users,
+  <span class="fn">ROUND</span>(<span class="num">100.0</span> * purchase_users / view_users, <span class="num">2</span>) <span class="kw">AS</span> overall_cvr_pct
+<span class="kw">FROM</span> funnel_by_channel <span class="kw">ORDER BY</span> view_users <span class="kw">DESC</span>;</code></pre>
+</details>
 </section>
 
+<!-- ====== ④ 数据可视化 ====== -->
 <section>
-<h2>分析结果</h2>
-<h3>📊 DAU 概览（2020 年 11 月）</h3>
-<div class="metrics">
-<div class="metric-card"><div class="value">4,648</div><div class="label">最高 DAU</div></div>
-<div class="metric-card"><div class="value">1,919</div><div class="label">最低 DAU</div></div>
-<div class="metric-card"><div class="value">102,530</div><div class="label">google/organic 用户数</div></div>
-<div class="metric-card"><div class="value">4,419</div><div class="label">最终购买用户</div></div>
+<h2>数据可视化</h2>
+
+<h3>图表 1：整体转化漏斗（有序时间戳约束）</h3>
+<div id="chart-funnel" class="chart-container"></div>
+<div class="chart-note">
+view_item → add_to_cart 流失最严重（仅 20.44%），约 4/5 的浏览用户未加购。进入结算流程后完成率较高（55.76%），说明决策门槛主要在"加购"环节，而非支付环节。
 </div>
 
-<h3>📈 转化漏斗</h3>
-<div class="funnel">
-<div class="funnel-step"><span class="step-name">1. view_item（浏览商品）</span><span class="step-value">21,581 用户</span><span class="step-rate">—</span></div>
-<div class="funnel-arrow">▼</div>
-<div class="funnel-step"><span class="step-name">2. add_to_cart（加购）</span><span class="step-value">4,420 用户</span><span class="step-rate">20.48%</span></div>
-<div class="funnel-arrow">▼</div>
-<div class="funnel-step"><span class="step-name">3. begin_checkout（发起结账）</span><span class="step-value">3,423 用户</span><span class="step-rate">77.44%</span></div>
-<div class="funnel-arrow">▼</div>
-<div class="funnel-step"><span class="step-name">4. purchase（完成购买）</span><span class="step-value">4,419 用户</span><span class="step-rate">45.49%</span></div>
+<h3>图表 2：各渠道用户规模与整体转化率</h3>
+<div id="chart-channel-cvr" class="chart-container"></div>
+<div class="chart-note">
+Organic Search 流量最大，但整体转化率最低（4.15%）；Paid Search 流量最小，转化率与 Organic 接近（4.16%），但 checkout→purchase 为各渠道最高（57.59%）。
 </div>
 
-<h3>🔍 渠道来源 Top 5</h3>
-<table>
-<thead><tr><th>渠道分组</th><th>用户数</th><th>占比</th></tr></thead>
-<tbody>
-<tr><td><strong>Google / Organic</strong></td><td>102,530</td><td>37.8%</td></tr>
-<tr><td><strong>(direct) / (none)</strong></td><td>71,952</td><td>26.5%</td></tr>
-<tr><td><strong>google / referral</strong></td><td>37,358</td><td>13.8%</td></tr>
-<tr><td><strong>（其他渠道）</strong></td><td>—</td><td>21.9%</td></tr>
-</tbody>
-</table>
+<h3>图表 3：分渠道各步骤转化率</h3>
+<div id="chart-channel-steps" class="chart-container"></div>
+<div class="chart-note">
+各渠道 view→add 转化率普遍在 19–21%，差异有限；分化主要体现在 checkout→purchase 环节，Paid Search（57.59%）和 Referral（56.79%）明显高于 Direct（55.18%），说明付费和引荐来源的用户付款意愿更强。
+</div>
 </section>
 
+<!-- ====== ⑤ 业务分析与优化建议 ====== -->
 <section>
-<h2>业务理解与能力迁移</h2>
+<h2>业务洞察与优化方向</h2>
+
 <div class="insight-box">
-<h3>💡 核心洞察</h3>
-<p>GA 界面提供的是加工后的聚合看板，而 BigQuery 存储的是原始事件数据。实际业务中的用户漏斗往往跨越多个系统——如 easesourcing.com 的真实漏斗由三层组成：</p>
-<p>1. GA 独立访客（流量层）→ 2. 前端"Try for Free"按钮点击（意向层）→ 3. 后端 Agent 开启新对话（转化层）</p>
-<p>因此，完整分析需要将 GA 流量数据、前端埋点事件、后端业务数据合并，这正是本 SQL 项目所复现的分析思路。</p>
+<h4>5.1 整体漏斗：流失集中在加购环节</h4>
+<p>view_item → add_to_cart 转化率仅 <strong>20.44%</strong>，是整个漏斗流失最严重的节点，约 4/5 的浏览用户没有加购。而一旦用户进入结算（begin_checkout），最终完成购买的概率达到 <strong>55.76%</strong>，说明支付意愿本身没有问题，问题出在"浏览 → 加购"的决策门槛上。</p>
+<ul>
+<li>商品详情页是核心优化战场：价格展示、评论数量、库存紧迫感（"仅剩 X 件"）、加购按钮的视觉权重</li>
+<li>对高浏览低加购的商品做单独分析，排查是定价问题还是信息不足</li>
+</ul>
 </div>
+
+<div class="insight-box">
+<h4>5.2 渠道质量：Paid Search 转化链路最强</h4>
+<p>Paid Search 的 checkout→purchase 转化率 <strong>57.59%</strong>，是五个渠道中最高的，说明付费搜索带来的用户付款意愿最强、决策最确定。但 view_to_add 仅 <strong>19.12%</strong>，是各渠道最低，说明部分广告关键词吸引的用户与商品匹配度不高。</p>
+<ul>
+<li>付费渠道预算值得维持甚至加大，但需要优化关键词定向，提升 view→add 阶段的匹配度</li>
+<li>可以用 view_to_add 作为广告组质量的判断指标，低于 18% 的广告组考虑暂停或调整落地页</li>
+</ul>
+</div>
+
+<div class="insight-box">
+<h4>5.3 Referral 渠道：引流质量被低估</h4>
+<p>Referral 的 overall_cvr <strong>4.53%</strong> 和 checkout→purchase <strong>56.79%</strong> 均高于 Organic Search，且 view_to_add（20.73%）也不低。这说明来自外链的用户整体质量较高——他们带着明确意图从第三方站点跳转而来，决策链路更短。</p>
+<ul>
+<li>外链建设 ROI 较高，值得持续投入</li>
+<li>对 Referral 来源做二级拆分（哪些域名带来转化更高的流量），优先维护高质量引荐来源</li>
+</ul>
+</div>
+
+<div class="insight-box">
+<h4>5.4 Organic Search：流量最大，但加购率最低</h4>
+<p>Organic Search 贡献了 <strong>22,508</strong> 名 view_item 用户，占总量约 37%，是最大的流量来源。但 view_to_add 仅 <strong>19.86%</strong>，是除 Paid Search 外最低的，overall_cvr <strong>4.15%</strong> 也是最低。这与 SEO 流量的典型特征一致：自然搜索用户处于信息收集阶段，购买意图相对分散。</p>
+<ul>
+<li>针对高浏览量但低加购的商品页面，优化内容相关性和 CTA 设计</li>
+<li>SEO 选题上优先布局商业意图词（"buy"、"best"、"review"），而非纯信息词，从源头提升流量质量</li>
+</ul>
+</div>
+
 <div class="insight-box" style="background:#eff6ff;border-color:#bfdbfe">
-<h3 style="color:#1e40af">🎯 能力证明</h3>
-<p style="color:#1d4ed8">从<strong>运营执行</strong>（周报取数、看板记录）→ 向上理解业务指标含义，向下掌握 SQL 查询原始数据。将实习中的 GA / Mixpanel 实际场景与标准 SQL 分析能力结合，完成从运营到数据分析的技能迁移。</p>
+<h4 style="color:#1e40af">5.5 与实际业务经验的结合</h4>
+<p style="color:#1d4ed8">以上分析框架直接来源于实习中的真实场景：在 easesourcing.com B 端 SaaS 产品运营工作中，用户从官网进入到 Agent 开聊的转化路径同样分为三层（GA 流量 → 前端点击 → 后端行为），与本项目的 view → add → checkout → purchase 漏斗结构一致。本 SQL 项目是对该分析能力的系统化复现和扩展。</p>
 </div>
 </section>
 
 <footer>
 <p>项目作者：Sherry · 数据来源：bigquery-public-data.ga4_obfuscated_sample_ecommerce</p>
-<p style="margin-top:.5rem">SQL 源码可在 <a href="https://github.com/sherrypao-max" target="_blank">GitHub</a> 查看</p>
+<p style="margin-top:.5rem"><a href="https://github.com/sherrypao-max/ga4-bq-analysis" target="_blank">GitHub 仓库</a></p>
 </footer>
+
 </div>
+
+<script>
+// ====== Chart 1: Funnel ======
+var c1 = echarts.init(document.getElementById('chart-funnel'));
+c1.setOption({
+  tooltip:{trigger:'axis',axisPointer:{type:'shadow'},formatter:function(p){var d=p[0].data;return d.name+'<br/>用户数: '+d.value.toLocaleString()}},
+  grid:{left:'3%',right:'4%',bottom:'3%',containLabel:true},
+  xAxis:{type:'value'},
+  yAxis:{type:'category',data:['purchase','begin_checkout','add_to_cart','view_item'],inverse:true},
+  series:[{type:'bar',data:[{name:'purchase',value:2637},{name:'begin_checkout',value:4729},{name:'add_to_cart',value:12536},{name:'view_item',value:61335}],itemStyle:{color:function(p){var cs=['#16a34a','#22c55e','#93c5fd','#3b82f6'];return cs[p.dataIndex]},borderRadius:[0,6,6,0]},label:{show:true,position:'right',formatter:function(p){var rates=['','55.76%','37.72%','20.44%'];return p.value.toLocaleString()+(rates[p.dataIndex]?' ('+rates[p.dataIndex]+')':'')}}}]
+});
+
+// ====== Chart 2: Channel Scale + CVR ======
+var c2 = echarts.init(document.getElementById('chart-channel-cvr'));
+c2.setOption({
+  tooltip:{trigger:'axis'},
+  legend:{data:['用户数','整体转化率']},
+  grid:{left:'3%',right:'4%',bottom:'3%',containLabel:true},
+  xAxis:{type:'category',data:['Organic Search','Direct','Other','Referral','Paid Search']},
+  yAxis:[{type:'value',name:'用户数'},{type:'value',name:'转化率',max:6,axisLabel:{formatter:'{value}%'}}],
+  series:[
+    {name:'用户数',type:'bar',data:[22508,14321,11271,9227,3101],itemStyle:{color:'#3b82f6'}},
+    {name:'整体转化率',type:'line',yAxisIndex:1,data:[4.15,4.39,4.60,4.53,4.16],itemStyle:{color:'#f59e0b'},lineStyle:{width:3},symbolSize:8,label:{show:true,formatter:'{c}%'}}
+  ]
+});
+
+// ====== Chart 3: Channel Step Rates ======
+var c3 = echarts.init(document.getElementById('chart-channel-steps'));
+c3.setOption({
+  tooltip:{trigger:'axis'},
+  legend:{data:['view→add','add→checkout','checkout→purchase']},
+  grid:{left:'3%',right:'4%',bottom:'3%',containLabel:true},
+  xAxis:{type:'category',data:['Organic Search','Direct','Other','Referral','Paid Search']},
+  yAxis:{type:'value',name:'转化率',max:60,axisLabel:{formatter:'{value}%'}},
+  series:[
+    {name:'view→add',type:'bar',data:[19.86,21.38,21.23,20.73,19.12],itemStyle:{color:'#93c5fd'},label:{show:true,formatter:'{c}%',fontSize:10}},
+    {name:'add→checkout',type:'bar',data:[37.32,37.17,38.82,38.47,37.77],itemStyle:{color:'#60a5fa'},label:{show:true,formatter:'{c}%',fontSize:10}},
+    {name:'checkout→purchase',type:'bar',data:[55.94,55.18,55.76,56.79,57.59],itemStyle:{color:'#2563eb'},label:{show:true,formatter:'{c}%',fontSize:10}}
+  ]
+});
+
+window.addEventListener('resize',function(){c1.resize();c2.resize();c3.resize()});
+</script>
 </body>
 </html>
